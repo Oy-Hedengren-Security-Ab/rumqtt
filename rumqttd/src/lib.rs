@@ -21,9 +21,9 @@ use tracing_subscriber::{
 pub use link::alerts;
 pub use link::local;
 pub use link::meters;
-pub use router::{Alert, IncomingMeter, Meter, Notification, OutgoingMeter};
+pub use router::{Alert, Forward, IncomingMeter, Meter, Notification, OutgoingMeter, Router};
 use segments::Storage;
-pub use server::Broker;
+pub use server::{Broker, LinkType, Server};
 
 pub use self::router::shared_subs::Strategy;
 
@@ -149,7 +149,7 @@ pub struct ConnectionSettings {
     pub max_inflight_count: usize,
     pub auth: Option<HashMap<String, String>>,
     #[serde(skip)]
-    external_auth: Option<AuthHandler>,
+    pub external_auth: Option<AuthHandler>,
     #[serde(default)]
     pub dynamic_filters: bool,
 }

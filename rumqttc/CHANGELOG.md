@@ -8,6 +8,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed 
+### Security
+
+
+---
+
+## [rumqttc 0.25.1] - 21-11-2025
+
+### Added
+* `use-rustls-no-provider` feature flag to allow choosing crypto backend without being forced to compile `aws_lc_rs`
+
+### Changed
+### Deprecated
+### Removed
+### Fixed 
+* Fixed broken websocket feature in rumqttc-0.25.0
+
+### Security
+
+
+---
+
+## [rumqttc 0.25.0] - 09-10-2025
+
+### Added
+
+* `size()` method on `Packet` calculates size once serialized.
+* `read()` and `write()` methods on `Packet`.
+* `ConnectionAborted` variant on `StateError` type to denote abrupt end to a connection
+* `set_session_expiry_interval` and `session_expiry_interval` methods on `MqttOptions`.
+* `Auth` packet as per MQTT5 standards
+* Allow configuring  the `nodelay` property of underlying TCP client with the `tcp_nodelay` field in `NetworkOptions`
+* `set_client_id` method on `MqttOptions`
+
+### Changed
+
+* rename `N` as `AsyncReadWrite` to describe usage.
+* use `Framed` to encode/decode MQTT packets.
+* use `Login` to store credentials
+* Made `DisconnectProperties` struct public.
+* Replace `Vec<Option<u16>>` with `FixedBitSet` for managing packet ids of released QoS 2 publishes and incoming QoS 2 publishes in `MqttState`.
+* Accept `native_tls::TlsConnector` as input for `Transport::tls_with_config`.
+* Update `thiserror` to `2.0.8`, `tokio-rustls` to `0.26.0`, `rustls-webpki` to `0.102.8`, `rustls-pemfile` to `2.2.0`, `rustls-native-certs` to `0.8.1`, `async-tungstenite` to `0.28.0`, `ws_stream_tungstenite` to `0.14.0`, `native-tls` to `0.2.12` and `tokio-stream` to `0.1.16`.
+* Make error types returned by `rumqttc::v5::Connection` public
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+* Validate filters while creating subscription requests.
+* Make v4::Connect::write return correct value
+* Ordering of `State.events` related to `QoS > 0` publishes
+* Filter PUBACK in pending save requests to fix unexpected PUBACK sent to reconnected broker.
+* Resume session only if broker sends `CONNACK` with `session_present == 1`.
+* Remove v5 PubAck/PubRec/PubRel/PubComp/Sub/Unsub failures from `StateError` and log warnings on these failures.
+
+### Security
+
+---
+
+## [rumqttc 0.24.0] - 27-02-2024
+
+### Added
 - Expose `EventLoop::clean` to allow triggering shutdown and subsequent storage of pending requests
 - Support for all variants of TLS key formats currently supported by Rustls: `PKCS#1`, `PKCS#8`, `RFC5915`. In practice we should now support all RSA keys and ECC keys in `DER` and `SEC1` encoding. Previously only `PKCS#1` and `PKCS#8` where supported.
 - TLS Error variants: `NoValidClientCertInChain`, `NoValidKeyInChain`.

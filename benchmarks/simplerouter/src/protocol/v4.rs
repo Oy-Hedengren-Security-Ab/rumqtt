@@ -102,7 +102,7 @@ pub(crate) mod connect {
 
             // update connect flags
             buffer[flags_index] = connect_flags;
-            Ok(len)
+            Ok(1 + count + len)
         }
     }
 
@@ -183,7 +183,7 @@ pub(crate) mod connect {
         fn write(&self, buffer: &mut BytesMut) -> Result<u8, Error> {
             let mut connect_flags = 0;
 
-            connect_flags |= 0x04 | (self.qos as u8) << 3;
+            connect_flags |= 0x04 | ((self.qos as u8) << 3);
             if self.retain {
                 connect_flags |= 0x20;
             }
@@ -482,7 +482,7 @@ pub(crate) mod publish {
         let qos = qos as u8;
         let retain = retain as u8;
 
-        buffer.put_u8(0b0011_0000 | retain | qos << 1 | dup << 3);
+        buffer.put_u8(0b0011_0000 | retain | (qos << 1) | (dup << 3));
 
         let count = write_remaining_length(buffer, len)?;
         write_mqtt_string(buffer, topic);
@@ -497,7 +497,6 @@ pub(crate) mod publish {
 
         buffer.extend_from_slice(payload);
 
-        // TODO: Returned length is wrong in other packets. Fix it
         Ok(1 + count + len)
     }
 }
