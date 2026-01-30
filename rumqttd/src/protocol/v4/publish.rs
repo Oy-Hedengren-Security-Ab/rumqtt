@@ -47,7 +47,7 @@ pub fn write(publish: &Publish, buffer: &mut BytesMut) -> Result<usize, Error> {
     let dup = publish.dup as u8;
     let qos = publish.qos as u8;
     let retain = publish.retain as u8;
-    buffer.put_u8(0b0011_0000 | retain | qos << 1 | dup << 3);
+    buffer.put_u8(0b0011_0000 | retain | (qos << 1) | (dup << 3));
 
     let count = write_remaining_length(buffer, len)?;
     write_mqtt_bytes(buffer, &publish.topic);
@@ -63,6 +63,5 @@ pub fn write(publish: &Publish, buffer: &mut BytesMut) -> Result<usize, Error> {
 
     buffer.extend_from_slice(&publish.payload);
 
-    // TODO: Returned length is wrong in other packets. Fix it
     Ok(1 + count + len)
 }

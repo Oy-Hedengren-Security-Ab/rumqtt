@@ -92,7 +92,7 @@ pub fn write(
 
     // update connect flags
     buffer[flags_index] = connect_flags;
-    Ok(len)
+    Ok(1 + count + len)
 }
 
 mod will {
@@ -130,7 +130,7 @@ mod will {
     pub fn write(will: &LastWill, buffer: &mut BytesMut) -> Result<u8, Error> {
         let mut connect_flags = 0;
 
-        connect_flags |= 0x04 | (will.qos as u8) << 3;
+        connect_flags |= 0x04 | ((will.qos as u8) << 3);
         if will.retain {
             connect_flags |= 0x20;
         }

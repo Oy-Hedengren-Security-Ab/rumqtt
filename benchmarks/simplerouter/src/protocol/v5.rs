@@ -1016,7 +1016,7 @@ pub(crate) mod publish {
         let qos = qos as u8;
         let retain = retain as u8;
 
-        buffer.put_u8(0b0011_0000 | retain | qos << 1 | dup << 3);
+        buffer.put_u8(0b0011_0000 | retain | (qos << 1) | (dup << 3));
 
         let count = write_remaining_length(buffer, len)?;
         write_mqtt_string(buffer, topic);
@@ -1031,7 +1031,6 @@ pub(crate) mod publish {
 
         buffer.extend_from_slice(payload);
 
-        // TODO: Returned length is wrong in other packets. Fix it
         Ok(1 + count + len)
     }
 }
@@ -1315,10 +1314,10 @@ pub(crate) mod subscribe {
                 let options = read_u8(&mut bytes)?;
                 let requested_qos = options & 0b0000_0011;
 
-                let nolocal = options >> 2 & 0b0000_0001;
+                let nolocal = (options >> 2) & 0b0000_0001;
                 let nolocal = nolocal != 0;
 
-                let preserve_retain = options >> 3 & 0b0000_0001;
+                let preserve_retain = (options >> 3) & 0b0000_0001;
                 let preserve_retain = preserve_retain != 0;
 
                 let retain_forward_rule = (options >> 4) & 0b0000_0011;

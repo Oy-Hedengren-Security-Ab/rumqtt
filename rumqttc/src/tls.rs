@@ -1,22 +1,22 @@
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use rustls_pemfile::Item;
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use tokio_rustls::rustls::{
     self,
     pki_types::{InvalidDnsNameError, ServerName},
     ClientConfig, RootCertStore,
 };
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use tokio_rustls::TlsConnector as RustlsConnector;
 
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use std::convert::TryFrom;
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use std::io::{BufReader, Cursor};
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 use std::sync::Arc;
 
-use crate::framed::N;
+use crate::framed::AsyncReadWrite;
 use crate::TlsConfiguration;
 
 #[cfg(feature = "use-native-tls")]
@@ -36,27 +36,27 @@ pub enum Error {
     /// I/O related error
     #[error("I/O: {0}")]
     Io(#[from] io::Error),
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     /// Certificate/Name validation error
     #[error("Web Pki: {0}")]
     WebPki(#[from] webpki::Error),
     /// Invalid DNS name
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     #[error("DNS name")]
     DNSName(#[from] InvalidDnsNameError),
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     /// Error from rustls module
     #[error("TLS error: {0}")]
     TLS(#[from] rustls::Error),
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     /// No valid CA cert found
     #[error("No valid CA certificate provided")]
     NoValidCertInChain,
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     /// No valid client cert found
     #[error("No valid certificate for client authentication in chain")]
     NoValidClientCertInChain,
-    #[cfg(feature = "use-rustls")]
+    #[cfg(feature = "use-rustls-no-provider")]
     /// No valid key found
     #[error("No valid key in chain")]
     NoValidKeyInChain,
@@ -65,7 +65,7 @@ pub enum Error {
     NativeTls(#[from] NativeTlsError),
 }
 
-#[cfg(feature = "use-rustls")]
+#[cfg(feature = "use-rustls-no-provider")]
 pub async fn rustls_connector(tls_config: &TlsConfiguration) -> Result<RustlsConnector, Error> {
     let config = match tls_config {
         TlsConfiguration::Simple {
@@ -155,6 +155,7 @@ pub async fn native_tls_connector(
             connector_builder.build()?
         }
         TlsConfiguration::Native => native_tls::TlsConnector::new()?,
+        TlsConfiguration::NativeConnector(connector) => connector.to_owned(),
         #[allow(unreachable_patterns)]
         _ => unreachable!("This cannot be called for other TLS backends than Native TLS"),
     };
@@ -166,17 +167,19 @@ pub async fn tls_connect(
     addr: &str,
     _port: u16,
     tls_config: &TlsConfiguration,
-    tcp: Box<dyn N>,
-) -> Result<Box<dyn N>, Error> {
-    let tls: Box<dyn N> = match tls_config {
-        #[cfg(feature = "use-rustls")]
+    tcp: Box<dyn AsyncReadWrite>,
+) -> Result<Box<dyn AsyncReadWrite>, Error> {
+    let tls: Box<dyn AsyncReadWrite> = match tls_config {
+        #[cfg(feature = "use-rustls-no-provider")]
         TlsConfiguration::Simple { .. } | TlsConfiguration::Rustls(_) => {
             let connector = rustls_connector(tls_config).await?;
             let domain = ServerName::try_from(addr)?.to_owned();
             Box::new(connector.connect(domain, tcp).await?)
         }
         #[cfg(feature = "use-native-tls")]
-        TlsConfiguration::Native | TlsConfiguration::SimpleNative { .. } => {
+        TlsConfiguration::Native
+        | TlsConfiguration::NativeConnector(_)
+        | TlsConfiguration::SimpleNative { .. } => {
             let connector = native_tls_connector(tls_config).await?;
             Box::new(connector.connect(addr, tcp).await?)
         }
